@@ -5,7 +5,7 @@ from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SequentialChain
 from langchain.chains.conversation.memory import ConversationBufferMemory
-
+# from langchain.memory import ConversationBufferMemory
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -28,7 +28,7 @@ memory = ConversationBufferMemory(memory_key='chat_history')
 
 llm = OpenAI(temperature=.9)
 title_chain = LLMChain(llm=llm, prompt=title_template, 
-verbose=True, output_key='title')
+verbose=True, output_key='title', memory=memory)
 script_chain = LLMChain(llm=llm, prompt=script_template, 
 verbose=True, output_key='script')
 sequential_chain = SequentialChain(chains=[title_chain, script_chain],
@@ -40,8 +40,8 @@ if st.button('Generate'):
             response = sequential_chain({'topic': prompt}, return_only_outputs=True)
             st.write(response['title'])
             st.write(response['script'])
-        # with st.expander('Message History'):
-        #     st.info(memory.buffer)
+        with st.expander('Message History'):
+            st.info(memory.buffer)
     else:
         st.warning('Please enter your prompt')
 
