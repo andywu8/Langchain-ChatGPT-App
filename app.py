@@ -3,7 +3,10 @@ import streamlit as st
 from typing_extensions import Protocol
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain, SimpleSequentialChain
+from langchain.chains import LLMChain, SequentialChain
+from langchain.chains.conversation.memory import ConversationBufferMemory
+
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -20,15 +23,27 @@ script_template = PromptTemplate(
     template='write me a youtube video script based on this title TITLE:{title}'
 )
 
+# Memory 
+memory = ConversationBufferMemory(memory_key='chat_history')
 
 llm = OpenAI(temperature=.9)
-title_chain = LLMChain(llm=llm, prompt=title_template, verbose=True)
-script_chain = LLMChain(llm=llm, prompt=script_template, verbose=True)
-sequential_chain = SimpleSequentialChain(chains=[title_chain, script_chain], verbose=True)
+title_chain = LLMChain(llm=llm, prompt=title_template, 
+verbose=True, output_key='title')
+script_chain = LLMChain(llm=llm, prompt=script_template, 
+verbose=True, output_key='script')
+sequential_chain = SequentialChain(chains=[title_chain, script_chain],
+input_variables=['topic'], output_variables=['title', 'script'], verbose=True)
 
-if prompt:
-    response = sequential_chain.run(prompt)
-    st.write(response)
+if st.button('Generate'):
+    if prompt:
+        with st.spinner('Generating response...'):
+            response = sequential_chain({'topic': prompt}, return_only_outputs=True)
+            st.write(response['title'])
+            st.write(response['script'])
+        # with st.expander('Message History'):
+        #     st.info(memory.buffer)
+    else:
+        st.warning('Please enter your prompt')
 
 
 
