@@ -1,10 +1,14 @@
 import os 
 import streamlit as st
+import langchain
 from typing_extensions import Protocol
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain, SequentialChain
-from langchain.chains.conversation.memory import ConversationBufferMemory
+# from langchain.chains.conversation.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory
+print(langchain.__version__)
+
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -23,13 +27,13 @@ script_template = PromptTemplate(
 )
 
 # Memory 
-memory = ConversationBufferMemory(memory_key='chat_history')
+memory = ConversationBufferMemory(input_key='topic', memory_key='chat_history')
 
 llm = OpenAI(temperature=.9)
 title_chain = LLMChain(llm=llm, prompt=title_template, 
 verbose=True, output_key='title', memory=memory)
 script_chain = LLMChain(llm=llm, prompt=script_template, 
-verbose=True, output_key='script')
+verbose=True, output_key='script', memory=memory)
 sequential_chain = SequentialChain(chains=[title_chain, script_chain],
 input_variables=['topic'], output_variables=['title', 'script'], verbose=True)
 
